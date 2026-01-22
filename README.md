@@ -34,7 +34,14 @@ A professional AI agent for market analysis and trade confirmation, powered by O
 
 ## Usage
 
-Run the CLI tool:
+### Option 1: Web Interface (Streamlit) - Recommended
+Run the professional web dashboard:
+```bash
+streamlit run app.py
+```
+
+### Option 2: CLI Tool
+Run the agent via the command line:
 ```bash
 python main.py
 ```
