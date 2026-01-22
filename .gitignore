@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+.env.local
+.env.shared
+.env.test
+.env.test.local
+.env.development.local
+.env.production.local
+.DS_Store
