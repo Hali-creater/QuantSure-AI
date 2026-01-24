@@ -14,29 +14,16 @@ class TradeAgent:
         self.client = OpenAI(api_key=self.api_key)
         self.model = model
 
-    def analyze(self, market_data, image_bytes=None, image_format="jpeg"):
+    def analyze(self, market_data):
         """
-        Analyzes the provided market data and optional image using the system prompt.
+        Analyzes the provided market data using the system prompt.
         """
         try:
-            content = []
-            content.append({"type": "text", "text": f"Please analyze the following market data and provide a trade recommendation:\n\n{market_data}"})
-
-            if image_bytes:
-                import base64
-                base64_image = base64.b64encode(image_bytes).decode('utf-8')
-                content.append({
-                    "type": "image_url",
-                    "image_url": {
-                        "url": f"data:image/{image_format};base64,{base64_image}"
-                    }
-                })
-
             response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": content}
+                    {"role": "user", "content": f"Please analyze the following market data and provide a trade recommendation:\n\n{market_data}"}
                 ],
                 temperature=0.7
             )

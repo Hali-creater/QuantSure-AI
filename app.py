@@ -2,8 +2,6 @@ import streamlit as st
 import os
 from agent import TradeAgent
 from dotenv import load_dotenv
-from PIL import Image
-import io
 
 # Load environment variables
 load_dotenv()
@@ -98,11 +96,6 @@ with col1:
         placeholder="Enter any additional market context, news, or observations..."
     )
 
-    uploaded_file = st.file_uploader("Upload Chart Screenshot", type=["jpg", "jpeg", "png"])
-    if uploaded_file is not None:
-        image = Image.open(uploaded_file)
-        st.image(image, caption="Uploaded Chart", use_container_width=True)
-
     predict_button = st.button("🚀 PREDICT TRADE NOW", use_container_width=True)
 
 with col2:
@@ -142,14 +135,7 @@ Additional Context:
 
                     agent = TradeAgent(api_key=api_key, model=model)
 
-                    image_bytes = None
-                    if uploaded_file:
-                        # Convert image to bytes
-                        img_byte_arr = io.BytesIO()
-                        image.save(img_byte_arr, format=image.format if image.format else 'JPEG')
-                        image_bytes = img_byte_arr.getvalue()
-
-                    analysis = agent.analyze(full_context, image_bytes=image_bytes, image_format=image.format.lower() if uploaded_file and image.format else "jpeg")
+                    analysis = agent.analyze(full_context)
 
                     # Display the result
                     st.markdown(analysis)
