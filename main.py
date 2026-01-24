@@ -4,29 +4,20 @@ from agent import TradeAgent
 def main():
     print("--- Professional AI Trade Prediction & Confirmation Agent ---")
 
-    try:
-        agent = TradeAgent()
-    except ValueError as e:
-        print(f"Error: {e}")
-        sys.exit(1)
+    agent = TradeAgent()
 
-    print("\nPlease enter the market data for analysis (Enter 'DONE' on a new line when finished):")
-
-    lines = []
-    while True:
-        line = input()
-        if line.strip().upper() == "DONE":
-            break
-        lines.append(line)
-
-    market_data = "\n".join(lines)
-
-    if not market_data.strip():
-        print("No market data provided. Exiting.")
+    asset = input("Enter Asset Symbol (e.g., BTC-USD): ").strip()
+    if not asset:
+        print("No asset symbol provided. Exiting.")
         sys.exit(0)
 
-    print("\nAnalyzing market data... Please wait.\n")
-    analysis = agent.analyze(market_data)
+    print("\nAnalyzing market data for {}... Please wait.\n".format(asset))
+    params = {
+        "asset": asset,
+        "timeframe": "1h",
+        "risk_profile": "Moderate"
+    }
+    analysis = agent.analyze(params)
 
     print("-" * 50)
     print(analysis)

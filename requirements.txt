@@ -1,3 +1,15 @@
-openai
-python-dotenv
+numpy
+pandas
+scipy
+yfinance
+ccxt
+alpaca-trade-api
+pandas-ta
+scikit-learn
+xgboost
+QuantLib
+vectorbt
+shap
 streamlit
+fastapi
+python-dotenv

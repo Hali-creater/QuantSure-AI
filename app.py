@@ -34,29 +34,22 @@ st.markdown("""
         background-color: #00ccaa;
         color: #ffffff;
     }
-    .result-card {
-        background-color: #161b22;
-        padding: 20px;
-        border-radius: 10px;
-        border: 1px solid #30363d;
-        margin-bottom: 10px;
-    }
-    .result-header {
-        color: #00ffcc;
-        font-size: 1.2rem;
-        font-weight: bold;
-        margin-bottom: 10px;
-    }
 </style>
 """, unsafe_allow_html=True)
 
 # Sidebar for configuration
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/2422/2422796.png", width=100)
-    st.title("Settings")
+    st.title("Institutional Agent")
 
-    api_key = st.text_input("OpenAI API Key", type="password", value=os.getenv("OPENAI_API_KEY", ""))
-    model = st.selectbox("Model", ["gpt-4o", "gpt-4-turbo"], index=0)
+    st.markdown("""
+    ### Local Analysis Engine
+    The agent is now powered by local institutional libraries including:
+    - **Pandas-TA** (Technical Analysis)
+    - **QuantLib** (Risk Management)
+    - **Scipy/Numpy** (SMC Logic)
+    - **YFinance** (Market Data)
+    """)
 
     st.divider()
 
@@ -71,12 +64,12 @@ with st.sidebar:
     st.subheader("🛠️ Indicators/Patterns")
     col_ind1, col_ind2 = st.columns(2)
     with col_ind1:
-        rsi = st.checkbox("RSI")
+        rsi = st.checkbox("RSI", value=True)
         macd = st.checkbox("MACD")
-        ema_sma = st.checkbox("EMA/SMA")
+        ema_sma = st.checkbox("EMA/SMA", value=True)
     with col_ind2:
         fib = st.checkbox("Fibonacci")
-        sr = st.checkbox("S/R Levels")
+        sr = st.checkbox("S/R Levels", value=True)
         patterns = st.checkbox("Chart Patterns")
 
 # Main Content
@@ -88,7 +81,8 @@ col1, col2 = st.columns([1, 1.2])
 with col1:
     st.subheader("📝 Market Details")
 
-    asset_name = st.text_input("Asset Name", placeholder="e.g. Bitcoin, EUR/USD, AAPL")
+    asset_name = st.text_input("Asset Symbol", placeholder="e.g. BTC-USD, AAPL, EURUSD=X")
+    st.caption("Use Yahoo Finance symbols (e.g., BTC-USD for Bitcoin, EURUSD=X for Euro/Dollar)")
 
     market_data = st.text_area(
         "Market Context (Optional)",
@@ -102,40 +96,22 @@ with col2:
     st.subheader("🎯 Prediction Result")
 
     if predict_button:
-        if not api_key:
-            st.error("Please provide an OpenAI API Key in the sidebar.")
-        elif not asset_name:
-            st.warning("Please enter an Asset Name.")
+        if not asset_name:
+            st.warning("Please enter an Asset Symbol.")
         else:
             with st.spinner("Analyzing market structure and institutional flow..."):
                 try:
-                    # Prepare indicators string
-                    selected_indicators = []
-                    if rsi: selected_indicators.append("RSI")
-                    if macd: selected_indicators.append("MACD")
-                    if ema_sma: selected_indicators.append("EMA/SMA")
-                    if fib: selected_indicators.append("Fibonacci")
-                    if sr: selected_indicators.append("Support/Resistance")
-                    if patterns: selected_indicators.append("Chart Patterns")
+                    params = {
+                        "asset": asset_name,
+                        "category": category,
+                        "market_type": market_type,
+                        "timeframe": timeframe,
+                        "risk_profile": risk_profile,
+                        "context": market_data
+                    }
 
-                    indicators_str = ", ".join(selected_indicators) if selected_indicators else "None selected"
-
-                    # Construct full context
-                    full_context = f"""
-Asset: {asset_name}
-Category: {category}
-Market Type: {market_type}
-Timeframe: {timeframe}
-Risk Profile: {risk_profile}
-Selected Indicators: {indicators_str}
-
-Additional Context:
-{market_data}
-"""
-
-                    agent = TradeAgent(api_key=api_key, model=model)
-
-                    analysis = agent.analyze(full_context)
+                    agent = TradeAgent()
+                    analysis = agent.analyze(params)
 
                     # Display the result
                     st.markdown(analysis)
