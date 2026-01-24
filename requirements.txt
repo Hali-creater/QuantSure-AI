@@ -3,7 +3,7 @@ pandas
 scipy
 yfinance
 ccxt
-alpaca-trade-api
+alpaca-py
 pandas-ta
 scikit-learn
 xgboost
@@ -13,3 +13,4 @@ shap
 streamlit
 fastapi
 python-dotenv
+urllib3>=2.0.0
