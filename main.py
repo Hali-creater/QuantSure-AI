@@ -20,7 +20,11 @@ def main():
     analysis = agent.analyze(params)
 
     print("-" * 50)
-    print(analysis)
+    if isinstance(analysis, dict):
+        for k, v in analysis.items():
+            print(f"{k.replace('_', ' ').title()}: {v}")
+    else:
+        print(analysis)
     print("-" * 50)
 
 if __name__ == "__main__":

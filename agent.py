@@ -113,6 +113,19 @@ class TradeAgent:
         if indicators is not None and indicators.get('bb', False):
             df.ta.bbands(append=True)
 
+        # Fibonacci Retracement (Basic)
+        if indicators is not None and indicators.get('fibonacci', False):
+            high = df['High'].max()
+            low = df['Low'].min()
+            diff = high - low
+            df['Fib_618'] = high - (0.618 * diff)
+            df['Fib_500'] = high - (0.500 * diff)
+            df['Fib_382'] = high - (0.382 * diff)
+
+        # Volume Profile (Basic check)
+        if indicators is not None and indicators.get('volume_profile', False) and 'Volume' in df.columns:
+            df['Volume_MA'] = df['Volume'].rolling(window=20).mean()
+
         df.ta.atr(append=True)
         return df
 
