@@ -134,22 +134,26 @@ with col2:
                     analysis = agent.analyze(params)
 
                     # Display the result in a more structured way
-                    lines = analysis.split("\n\n")
-                    for line in lines:
-                        if line.startswith("**I."):
-                            st.metric("Entry Price", line.split(":")[1].strip())
-                        elif line.startswith("**II."):
-                            st.metric("Stoploss", line.split(":")[1].strip())
-                        elif line.startswith("**III."):
-                            st.metric("Take Profit", line.split(":")[1].strip())
-                        elif line.startswith("**IV."):
-                            st.info(line)
-                        elif line.startswith("**V."):
-                            st.success(line)
-                        elif line.startswith("**VI."):
-                            st.warning(line)
-                        elif line.startswith("**VII."):
-                            st.markdown(line)
+                    if analysis.startswith("Error"):
+                        st.error(analysis)
+                    else:
+                        lines = analysis.split("\n\n")
+                        col_metrics = st.columns(3)
+                        for line in lines:
+                            if line.startswith("**I."):
+                                col_metrics[0].metric("Entry Price", line.split(":")[1].strip())
+                            elif line.startswith("**II."):
+                                col_metrics[1].metric("Stoploss", line.split(":")[1].strip())
+                            elif line.startswith("**III."):
+                                col_metrics[2].metric("Take Profit", line.split(":")[1].strip())
+                            elif line.startswith("**IV."):
+                                st.info(line)
+                            elif line.startswith("**V."):
+                                st.success(line)
+                            elif line.startswith("**VI."):
+                                st.warning(line)
+                            elif line.startswith("**VII."):
+                                st.markdown(line)
 
                 except Exception as e:
                     st.error(f"An error occurred: {e}")
