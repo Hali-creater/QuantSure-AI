@@ -22,9 +22,11 @@ def main():
     print("-" * 50)
     if isinstance(analysis, dict):
         for k, v in analysis.items():
-            print(f"{k.replace('_', ' ').title()}: {v}")
+            label = k.replace('_', ' ').title()
+            print(f"{label:15}: {v}")
     else:
         print(analysis)
+    print("\n🛑 This is NOT Financial Advice. Trading involves significant risk.")
     print("-" * 50)
 
 if __name__ == "__main__":

@@ -173,22 +173,39 @@ with col2:
                         st.error(res)
                     else:
                         st.markdown('<div class="main-card">', unsafe_allow_html=True)
-                        st.markdown(f'<div class="result-header"><span style="color: #58a6ff;">📊</span> Prediction Result</div>', unsafe_allow_html=True)
+                        st.markdown(f'<div class="result-header"><span style="color: #58a6ff;">📊</span> Prediction Result: {res["signal"]}</div>', unsafe_allow_html=True)
 
                         m1, m2, m3 = st.columns(3)
                         with m1:
-                            st.markdown(f'<div class="metric-box"><div class="metric-label">I. Entry Price</div><div class="metric-value">{res["entry"]}</div></div>', unsafe_allow_html=True)
+                            st.markdown(f'<div class="metric-box"><div class="metric-label">I. Entry Zone</div><div class="metric-value">{res["entry_zone"]}</div></div>', unsafe_allow_html=True)
                         with m2:
-                            st.markdown(f'<div class="metric-box"><div class="metric-label">II. Stoploss</div><div class="metric-value">{res["stop_loss"]}</div></div>', unsafe_allow_html=True)
+                            st.markdown(f'<div class="metric-box"><div class="metric-label">II. Invalidation</div><div class="metric-value">{res["stop_loss"]}</div></div>', unsafe_allow_html=True)
                         with m3:
-                            st.markdown(f'<div class="metric-box"><div class="metric-label">III. Take Profit</div><div class="metric-value">{res["take_profit"]}</div></div>', unsafe_allow_html=True)
+                            st.markdown(f'<div class="metric-box"><div class="metric-label">III. TP Target</div><div class="metric-value">{res["tp_target"]}</div></div>', unsafe_allow_html=True)
 
-                        st.markdown(f'<div class="info-box bg-blue-custom mt-4">Confidence: {res["confidence"]}</div>', unsafe_allow_html=True)
-                        st.markdown(f'<div class="info-box bg-green-custom">Asset: {res["asset"]}</div>', unsafe_allow_html=True)
-                        st.markdown(f'<div class="info-box bg-yellow-custom">Time in force: {res["time_in_force"]}</div>', unsafe_allow_html=True)
+                        i1, i2, i3, i4 = st.columns(4)
+                        with i1: st.markdown(f'<div class="info-box bg-blue-custom">Confidence: {res["confidence"]}</div>', unsafe_allow_html=True)
+                        with i2: st.markdown(f'<div class="info-box bg-blue-custom">Conviction: {res["conviction"]}</div>', unsafe_allow_html=True)
+                        with i3: st.markdown(f'<div class="info-box bg-green-custom">Asset: {res["asset"]}</div>', unsafe_allow_html=True)
+                        with i4: st.markdown(f'<div class="info-box bg-yellow-custom">TIF: {res["time_in_force"]}</div>', unsafe_allow_html=True)
 
-                        st.markdown(f'<div class="mt-4"><h5 style="color: #8b949e; font-size: 0.9rem; text-transform: uppercase;">Detailed Overview</h5>'
-                                    f'<p style="font-size: 0.95rem; line-height: 1.6;">{res["overview"]}</p></div>', unsafe_allow_html=True)
+                        st.markdown(f"""
+                        <div class="mt-4">
+                            <h5 style="color: #8b949e; font-size: 0.9rem; text-transform: uppercase;">Detailed Overview</h5>
+                            <div style="font-size: 0.95rem; line-height: 1.8;">
+                                <p><strong>🌍 Market Regime:</strong> {res["market_regime"]}</p>
+                                <p><strong>🔝 Higher TF Bias:</strong> {res["htf_bias"]}</p>
+                                <p><strong>🛠️ Setup Type:</strong> {res["setup_type"]}</p>
+                                <p><strong>📡 Signal:</strong> {res["signal"]}</p>
+                                <p><strong>⚖️ Risk Model:</strong> Entry: {res["entry_zone"]} | Invalidation: {res["invalidation"]} | Potential: {res["rr_potential"]} | {res["risk_hint"]}</p>
+                                <p><strong>📊 Historical Context:</strong> {res["historical_stats"]}</p>
+                                <p><strong>📝 Notes:</strong> {res["notes"]}</p>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                        st.markdown('<hr style="border-color: #30363d; margin: 20px 0;">', unsafe_allow_html=True)
+                        st.markdown('<p style="font-size: 0.8rem; color: #8b949e; text-align: center;">🛑 This is NOT Financial Advice. Trading involves significant risk.</p>', unsafe_allow_html=True)
                         st.markdown('</div>', unsafe_allow_html=True)
 
                 except Exception as e:
