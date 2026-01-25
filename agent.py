@@ -8,6 +8,26 @@ class TradeAgent:
     def __init__(self):
         pass
 
+    def normalize_symbol(self, asset):
+        """Normalizes common symbols to Yahoo Finance format."""
+        s = asset.upper().replace("/", "").replace(" ", "")
+
+        # Crypto
+        crypto_majors = ["BTC", "ETH", "SOL", "XRP", "ADA", "DOGE", "DOT"]
+        for c in crypto_majors:
+            if s == f"{c}USD": return f"{c}-USD"
+
+        # Forex
+        if len(s) == 6 and any(curr in s for curr in ["EUR", "GBP", "JPY", "AUD", "CAD", "CHF"]):
+            if not s.endswith("=X"): return f"{s}=X"
+
+        # Commodities
+        if s == "XAUUSD" or s == "GOLD": return "XAUUSD=X"
+        if s == "XAGUSD" or s == "SILVER": return "XAGUSD=X"
+        if s == "WTI" or s == "CRUDEOIL": return "CL=F"
+
+        return asset
+
     def get_data(self, asset, timeframe):
         """Fetches market data using yfinance."""
         tf_map = {
@@ -17,10 +37,19 @@ class TradeAgent:
         interval = tf_map.get(timeframe, "1h")
         period = "5d" if interval in ["1m", "5m", "15m"] else "1y"
 
+        # Try normalized symbol first
+        symbol = self.normalize_symbol(asset)
+
         try:
-            df = yf.download(asset, period=period, interval=interval, progress=False)
-            if df.empty:
+            df = yf.download(symbol, period=period, interval=interval, progress=False)
+            if df is None or df.empty or len(df) < 5:
+                # If normalized failed, try original
+                if symbol != asset:
+                    df = yf.download(asset, period=period, interval=interval, progress=False)
+
+            if df is None or df.empty or len(df) < 5:
                 return None
+
             # Flatten columns if multi-indexed
             if isinstance(df.columns, pd.MultiIndex):
                 df.columns = df.columns.get_level_values(0)
@@ -99,7 +128,7 @@ class TradeAgent:
 
         df = self.get_data(asset, timeframe)
         if df is None:
-            return "Error: Could not fetch data for the given asset. Please ensure the symbol is correct (e.g., BTC-USD, EURUSD=X, AAPL)."
+            return f"Error: Could not fetch data for '{asset}'. Please ensure the symbol is correct. For Gold, use 'XAUUSD=X' or 'GC=F'. For Forex, use 'EURUSD=X'. For Cryptos, use 'BTC-USD'."
 
         df = self.calculate_indicators(df, params.get('indicators'))
         smc = self.detect_smc(df)
@@ -107,16 +136,60 @@ class TradeAgent:
         current_price = float(df['Close'].iloc[-1])
         rsi = float(df['RSI_14'].iloc[-1]) if 'RSI_14' in df.columns else 50
 
+        # Institutional Confidence Score (0-100)
+        factors = []
+
+        # Factor 1: SMC Bias
+        if smc['bias'] == "Bullish": factors.append(30)
+        elif smc['bias'] == "Bearish": factors.append(-30)
+        else: factors.append(0)
+
+        # Factor 2: RSI Alignment
+        if rsi < 40 and smc['bias'] == "Bullish": factors.append(20)
+        elif rsi > 60 and smc['bias'] == "Bearish": factors.append(20)
+        elif 40 <= rsi <= 60: factors.append(10)
+        else: factors.append(-10)
+
+        # Factor 3: FVG Proximity (Institutional Liquidity)
+        has_nearby_fvg = False
+        for fvg in smc['fvgs']:
+            if abs(current_price - fvg['level']) / current_price < 0.05: # Within 5%
+                has_nearby_fvg = True
+                break
+        if has_nearby_fvg: factors.append(20)
+
+        # Factor 4: ML Verification
+        try:
+            from sklearn.ensemble import RandomForestRegressor
+            if len(df) >= 30:
+                X = np.arange(len(df)).reshape(-1, 1)
+                y = df['Close'].values
+                model = RandomForestRegressor(n_estimators=10)
+                model.fit(X, y)
+                pred = model.predict([[len(df)]])[0]
+                if pred > current_price and smc['bias'] == "Bullish": factors.append(10)
+                elif pred < current_price and smc['bias'] == "Bearish": factors.append(10)
+        except Exception:
+            pass
+
+        # Final Score
+        total_score = sum(factors)
+        confidence = min(max(50 + total_score, 0), 95)
+
+        # Institutional Factor: Business Day Check
+        try:
+            import QuantLib as ql
+            today = ql.Date.todaysDate()
+            calendar = ql.TARGET() # Institutional standard calendar
+            if not calendar.isBusinessDay(today):
+                confidence = max(confidence - 5, 0)
+        except Exception:
+            pass
+
         # Decision Logic
         decision = "WAIT"
-        confidence = 50
-
-        if smc['bias'] == "Bullish" and rsi < 70:
-            decision = "BUY"
-            confidence = 75 if rsi < 40 else 65
-        elif smc['bias'] == "Bearish" and rsi > 30:
-            decision = "SELL"
-            confidence = 75 if rsi > 60 else 65
+        if total_score >= 20: decision = "BUY"
+        elif total_score <= -20: decision = "SELL"
 
         # Risk Management (Institutional ATR-based)
         atr = float(df['ATR_14'].iloc[-1]) if 'ATR_14' in df.columns and not np.isnan(df['ATR_14'].iloc[-1]) else (df['High'].iloc[-1] - df['Low'].iloc[-1])
