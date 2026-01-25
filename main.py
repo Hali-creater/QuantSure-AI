@@ -1,5 +1,5 @@
 import sys
-from agent import TradeAgent
+from trade_engine import TradeAgent
 
 def main():
     print("--- Professional AI Trade Prediction & Confirmation Agent ---")

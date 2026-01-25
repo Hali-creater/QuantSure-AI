@@ -1,6 +1,6 @@
 import streamlit as st
 import os
-from agent import TradeAgent
+from trade_engine import TradeAgent
 from dotenv import load_dotenv
 
 # Load environment variables
