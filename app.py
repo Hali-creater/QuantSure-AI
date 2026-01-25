@@ -14,44 +14,97 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for a professional look
+# Load Bootstrap & Tailwind for custom styling
+st.markdown('<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">', unsafe_allow_html=True)
+st.markdown('<script src="https://cdn.tailwindcss.com"></script>', unsafe_allow_html=True)
+
+# Custom CSS for a professional look matching the images
 st.markdown("""
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+    body {
+        font-family: 'Inter', sans-serif;
+    }
     .stApp {
-        background-color: #0e1117;
-        color: #ffffff;
+        background-color: #0d1117;
+        color: #e6edf3;
+    }
+    .main-card {
+        background-color: #161b22;
+        border-radius: 12px;
+        padding: 24px;
+        border: 1px solid #30363d;
+        margin-bottom: 20px;
     }
     .stButton>button {
-        background-color: #00ffcc;
-        color: #0e1117;
-        font-weight: bold;
-        border-radius: 5px;
+        background: linear-gradient(90deg, #00d2ff 0%, #3a7bd5 100%);
+        color: white;
+        font-weight: 700;
+        border-radius: 8px;
         border: none;
-        padding: 0.5rem 1rem;
+        padding: 0.75rem 1rem;
+        width: 100%;
+        text-transform: uppercase;
+        letter-spacing: 1px;
         transition: all 0.3s ease;
     }
     .stButton>button:hover {
-        background-color: #00ccaa;
-        color: #ffffff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(58, 123, 213, 0.4);
+        color: white;
+    }
+    .result-header {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .metric-box {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 8px;
+        padding: 15px;
+        text-align: center;
+    }
+    .metric-label {
+        font-size: 0.8rem;
+        color: #8b949e;
+        margin-bottom: 5px;
+        text-transform: uppercase;
+    }
+    .metric-value {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #58a6ff;
+    }
+    .info-box {
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-top: 10px;
+        font-weight: 600;
+    }
+    .bg-blue-custom { background-color: rgba(56, 139, 253, 0.15); border: 1px solid rgba(56, 139, 253, 0.4); color: #58a6ff; }
+    .bg-green-custom { background-color: rgba(63, 185, 80, 0.15); border: 1px solid rgba(63, 185, 80, 0.4); color: #3fb950; }
+    .bg-yellow-custom { background-color: rgba(210, 153, 34, 0.15); border: 1px solid rgba(210, 153, 34, 0.4); color: #d29922; }
+
+    /* Input styling */
+    .stTextInput input, .stTextArea textarea, .stSelectbox div[data-baseweb="select"] {
+        background-color: #0d1117 !important;
+        border-color: #30363d !important;
+        color: white !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
 # Sidebar for configuration
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/2422/2422796.png", width=100)
+    st.image("https://cdn-icons-png.flaticon.com/512/2422/2422796.png", width=80)
     st.title("Institutional Agent")
 
-    st.markdown("""
-    ### Local Analysis Engine
-    The agent is now powered by local institutional libraries including:
-    - **Pandas-TA** (Technical Analysis)
-    - **Scipy/Numpy** (SMC Logic)
-    - **YFinance/CCXT** (Market Data)
-    - **Alpaca-py** (Institutional Flow)
-    """)
-
-    st.divider()
+    st.markdown("---")
 
     st.subheader("📋 Trade Parameters")
     category = st.selectbox("Trading Category", ["Options", "Futures", "Spot"])
@@ -59,55 +112,46 @@ with st.sidebar:
     timeframe = st.selectbox("Timeframe", ["1m", "5m", "15m", "30m", "1h", "4h", "Daily", "Weekly", "Monthly"])
     risk_profile = st.selectbox("Risk Profile", ["Conservative", "Moderate", "Aggressive"])
 
-    st.divider()
+    st.markdown("---")
 
     st.subheader("🛠️ Indicators/Patterns")
-    col_ind1, col_ind2 = st.columns(2)
-    with col_ind1:
-        rsi = st.checkbox("RSI", value=True)
-        macd = st.checkbox("MACD")
-        ema_sma = st.checkbox("EMA/SMA", value=True)
-        bb = st.checkbox("Bollinger Bands")
-    with col_ind2:
-        fib = st.checkbox("Fibonacci")
-        sr = st.checkbox("S/R Levels", value=True)
-        patterns = st.checkbox("Chart Patterns")
-        volume = st.checkbox("Volume Profile")
+    rsi = st.checkbox("RSI", value=True)
+    macd = st.checkbox("MACD")
+    ema_sma = st.checkbox("EMA/SMA", value=True)
+    bb = st.checkbox("Bollinger Bands")
+    fib = st.checkbox("Fibonacci")
+    sr = st.checkbox("S/R Levels", value=True)
+    patterns = st.checkbox("Chart Patterns")
+    volume = st.checkbox("Volume Profile")
 
 # Main Content
+st.markdown('<div class="main-card">', unsafe_allow_html=True)
 st.title("💹 Institutional AI Trade Predictor")
-st.markdown("---")
+st.markdown("Experience institutional-grade Smart Money Concepts (SMC) and market analysis.")
+st.markdown('</div>', unsafe_allow_html=True)
 
-col1, col2 = st.columns([1, 1.2])
+col1, col2 = st.columns([1, 1.2], gap="large")
 
 with col1:
+    st.markdown('<div class="main-card">', unsafe_allow_html=True)
     st.subheader("📝 Market Details")
 
-    asset_name = st.text_input("Asset Symbol", placeholder="e.g. BTC-USD, AAPL, EURUSD=X")
-    st.caption("Use Yahoo Finance symbols (e.g., BTC-USD for Bitcoin, EURUSD=X for Euro/Dollar)")
+    asset_name = st.text_input("Asset Name", placeholder="e.g. BTC-USD, AAPL, EURUSD=X")
 
     market_data = st.text_area(
         "Market Context (Optional)",
-        height=100,
-        placeholder="Enter any additional market context, news, or observations..."
+        height=80,
+        placeholder="Enter news, institutional flow observations, etc."
     )
 
-    st.subheader("🖼️ Upload Chart Screenshot")
-    uploaded_file = st.file_uploader("Upload a chart screenshot for visual confirmation (Optional)", type=["png", "jpg", "jpeg"])
-
-    if uploaded_file is not None:
-        st.image(uploaded_file, caption="Uploaded Chart Screenshot", use_container_width=True)
-        st.success("Screenshot uploaded. Our SMC engine will cross-reference technical data with the visual structure.")
-
     st.markdown("<br>", unsafe_allow_html=True)
-    predict_button = st.button("🚀 PREDICT TRADE NOW", use_container_width=True)
+    predict_button = st.button("🚀 PREDICT TRADE NOW")
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with col2:
-    st.subheader("🎯 Prediction Result")
-
     if predict_button:
         if not asset_name:
-            st.warning("Please enter an Asset Symbol.")
+            st.warning("Please enter an Asset Name.")
         else:
             with st.spinner("Analyzing market structure and institutional flow..."):
                 try:
@@ -119,47 +163,44 @@ with col2:
                         "risk_profile": risk_profile,
                         "context": market_data,
                         "indicators": {
-                            "rsi": rsi,
-                            "macd": macd,
-                            "ema_sma": ema_sma,
-                            "fib": fib,
-                            "sr": sr,
-                            "patterns": patterns,
-                            "bb": bb,
-                            "volume": volume
+                            "rsi": rsi, "macd": macd, "ema_sma": ema_sma, "fib": fib,
+                            "sr": sr, "patterns": patterns, "bb": bb, "volume": volume
                         }
                     }
 
                     agent = TradeAgent()
-                    analysis = agent.analyze(params)
+                    res = agent.analyze(params)
 
-                    # Display the result in a more structured way
-                    if analysis.startswith("Error"):
-                        st.error(analysis)
+                    if isinstance(res, str) and res.startswith("Error"):
+                        st.error(res)
                     else:
-                        lines = analysis.split("\n\n")
-                        col_metrics = st.columns(3)
-                        for line in lines:
-                            if line.startswith("**I."):
-                                col_metrics[0].metric("Entry Price", line.split(":")[1].strip())
-                            elif line.startswith("**II."):
-                                col_metrics[1].metric("Stoploss", line.split(":")[1].strip())
-                            elif line.startswith("**III."):
-                                col_metrics[2].metric("Take Profit", line.split(":")[1].strip())
-                            elif line.startswith("**IV."):
-                                st.info(line)
-                            elif line.startswith("**V."):
-                                st.success(line)
-                            elif line.startswith("**VI."):
-                                st.warning(line)
-                            elif line.startswith("**VII."):
-                                st.markdown(line)
+                        st.markdown('<div class="main-card">', unsafe_allow_html=True)
+                        st.markdown(f'<div class="result-header"><span style="color: #58a6ff;">📊</span> Prediction Result</div>', unsafe_allow_html=True)
+
+                        m1, m2, m3 = st.columns(3)
+                        with m1:
+                            st.markdown(f'<div class="metric-box"><div class="metric-label">I. Entry Price</div><div class="metric-value">{res["entry"]}</div></div>', unsafe_allow_html=True)
+                        with m2:
+                            st.markdown(f'<div class="metric-box"><div class="metric-label">II. Stoploss</div><div class="metric-value">{res["stop_loss"]}</div></div>', unsafe_allow_html=True)
+                        with m3:
+                            st.markdown(f'<div class="metric-box"><div class="metric-label">III. Take Profit</div><div class="metric-value">{res["take_profit"]}</div></div>', unsafe_allow_html=True)
+
+                        st.markdown(f'<div class="info-box bg-blue-custom mt-4">Confidence: {res["confidence"]}</div>', unsafe_allow_html=True)
+                        st.markdown(f'<div class="info-box bg-green-custom">Asset: {res["asset"]}</div>', unsafe_allow_html=True)
+                        st.markdown(f'<div class="info-box bg-yellow-custom">Time in force: {res["time_in_force"]}</div>', unsafe_allow_html=True)
+
+                        st.markdown(f'<div class="mt-4"><h5 style="color: #8b949e; font-size: 0.9rem; text-transform: uppercase;">VII. Detailed Overview</h5>'
+                                    f'<p style="font-size: 0.95rem; line-height: 1.6;">{res["overview"]}</p></div>', unsafe_allow_html=True)
+                        st.markdown('</div>', unsafe_allow_html=True)
 
                 except Exception as e:
                     st.error(f"An error occurred: {e}")
     else:
-        st.info("Fill in the parameters and press 'PREDICT TRADE NOW' to see the institutional analysis.")
+        st.markdown('<div class="main-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px; color: #8b949e; text-align: center;">'
+                    '<span style="font-size: 4rem; margin-bottom: 20px;">📈</span>'
+                    '<h4>Ready for Analysis</h4>'
+                    '<p>Enter market details and press "PREDICT TRADE NOW" to receive an institutional SMC prediction.</p>'
+                    '</div>', unsafe_allow_html=True)
 
 # Disclaimer
-st.divider()
-st.caption("⚠️ **Disclaimer:** This AI agent is a decision-support system and NOT a financial advisor. Trading involves significant risk. Never trade more than you can afford to lose. Smart Money Concepts (SMC) are probabilistic frameworks.")
+st.caption("⚠️ **Disclaimer:** This AI agent is a decision-support system based on Smart Money Concepts (SMC). Trading involves significant risk. Always use proper risk management.")
