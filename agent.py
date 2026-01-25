@@ -3,7 +3,6 @@ import numpy as np
 import pandas_ta as ta
 from scipy.signal import argrelextrema
 import yfinance as yf
-import QuantLib as ql
 
 class TradeAgent:
     def __init__(self):
@@ -44,18 +43,26 @@ class TradeAgent:
             elif df['Low'].iloc[i-2] > df['High'].iloc[i]:
                 fvgs.append({'type': 'Bearish', 'level': (df['Low'].iloc[i-2] + df['High'].iloc[i])/2})
 
-        # Market Structure (Simple BOS/CHoCH logic)
-        last_high = df['High'].iloc[-20:-1].max()
-        last_low = df['Low'].iloc[-20:-1].min()
-        current_close = df['Close'].iloc[-1]
+        # Market Structure (Swing-based BOS logic)
+        highs = df['High'].values
+        lows = df['Low'].values
 
+        # Find local peaks/valleys
+        order = 5
+        peaks = argrelextrema(highs, np.greater, order=order)[0]
+        valleys = argrelextrema(lows, np.less, order=order)[0]
+
+        last_peak = highs[peaks[-1]] if len(peaks) > 0 else df['High'].iloc[-20:-1].max()
+        last_valley = lows[valleys[-1]] if len(valleys) > 0 else df['Low'].iloc[-20:-1].min()
+
+        current_close = df['Close'].iloc[-1]
         bias = "Neutral"
         structure = "Ranging"
 
-        if current_close > last_high:
+        if current_close > last_peak:
             bias = "Bullish"
             structure = "BOS (Bullish)"
-        elif current_close < last_low:
+        elif current_close < last_valley:
             bias = "Bearish"
             structure = "BOS (Bearish)"
 
@@ -65,12 +72,19 @@ class TradeAgent:
             "bias": bias
         }
 
-    def calculate_indicators(self, df):
+    def calculate_indicators(self, df, indicators=None):
         """Calculates technical indicators using pandas-ta."""
-        df.ta.rsi(append=True)
-        df.ta.ema(length=20, append=True)
-        df.ta.ema(length=50, append=True)
-        df.ta.macd(append=True)
+        if indicators is None or indicators.get('rsi', True):
+            df.ta.rsi(append=True)
+        if indicators is None or indicators.get('ema_sma', True):
+            df.ta.ema(length=20, append=True)
+            df.ta.ema(length=50, append=True)
+        if indicators is None or indicators.get('macd', False):
+            df.ta.macd(append=True)
+        if indicators is not None and indicators.get('bb', False):
+            df.ta.bbands(append=True)
+
+        df.ta.atr(append=True)
         return df
 
     def analyze(self, params):
@@ -87,7 +101,7 @@ class TradeAgent:
         if df is None:
             return "Error: Could not fetch data for the given asset. Please ensure the symbol is correct (e.g., BTC-USD, EURUSD=X, AAPL)."
 
-        df = self.calculate_indicators(df)
+        df = self.calculate_indicators(df, params.get('indicators'))
         smc = self.detect_smc(df)
 
         current_price = float(df['Close'].iloc[-1])
@@ -104,23 +118,40 @@ class TradeAgent:
             decision = "SELL"
             confidence = 75 if rsi > 60 else 65
 
-        # Risk Management (Simple ATR-based or static for demo)
-        atr = df['High'].iloc[-1] - df['Low'].iloc[-1]
+        # Risk Management (Institutional ATR-based)
+        atr = float(df['ATR_14'].iloc[-1]) if 'ATR_14' in df.columns and not np.isnan(df['ATR_14'].iloc[-1]) else (df['High'].iloc[-1] - df['Low'].iloc[-1])
+        if atr == 0:
+            atr = current_price * 0.01 # Fallback to 1%
+
+        # Risk Multipliers based on profile
+        multipliers = {
+            'Conservative': {'sl': 1.5, 'tp': 3.0},
+            'Moderate': {'sl': 2.0, 'tp': 4.0},
+            'Aggressive': {'sl': 2.5, 'tp': 6.0}
+        }
+        mult = multipliers.get(risk_profile, multipliers['Moderate'])
+
         if decision == "BUY":
             entry = current_price
-            stop_loss = entry - (atr * 2)
-            take_profit = entry + (atr * 4)
+            stop_loss = entry - (atr * mult['sl'])
+            take_profit = entry + (atr * mult['tp'])
         elif decision == "SELL":
             entry = current_price
-            stop_loss = entry + (atr * 2)
-            take_profit = entry - (atr * 4)
+            stop_loss = entry + (atr * mult['sl'])
+            take_profit = entry - (atr * mult['tp'])
         else:
             entry = "N/A"
             stop_loss = "N/A"
             take_profit = "N/A"
 
         # Generate 7-point response
-        overview = f"Market analysis for {asset} shows a {smc['bias']} bias with {smc['structure']} structure. "
+        trade_nature = "Wait and Watch"
+        if decision == "BUY":
+            trade_nature = "Bullish Continuation" if smc['structure'] == "BOS (Bullish)" else "Potential Mean Reversion"
+        elif decision == "SELL":
+            trade_nature = "Bearish Continuation" if smc['structure'] == "BOS (Bearish)" else "Potential Mean Reversion"
+
+        overview = f"Market analysis for {asset} shows a {smc['bias']} bias with {smc['structure']} structure. This trade has the nature of a **{trade_nature}**. "
         if smc['fvgs']:
             overview += f"Detected Fair Value Gaps at {', '.join([f'{f['level']:.2f}' for f in smc['fvgs']])}. "
         overview += f"RSI is currently at {rsi:.2f}, indicating { 'oversold' if rsi < 30 else 'overbought' if rsi > 70 else 'neutral' } momentum."
@@ -128,13 +159,11 @@ class TradeAgent:
         # Risk profile adjustment
         time_in_force = "DAY" if timeframe in ["1m", "5m", "15m", "1h"] else "GTC"
 
-        response = f"""
-I. Entry Price: {entry if entry == "N/A" else f"{entry:.2f}"}
-II. Stoploss: {stop_loss if stop_loss == "N/A" else f"{stop_loss:.2f}"}
-III. Take profit: {take_profit if take_profit == "N/A" else f"{take_profit:.2f}"}
-IV. Confidence: {confidence}%
-V. Asset: {asset}
-VI. Time in force: {time_in_force}
-VII. Overview: {overview}
-"""
+        response = f"**I. Entry Price:** {entry if entry == 'N/A' else f'{entry:.2f}'}\n\n"
+        response += f"**II. Stoploss:** {stop_loss if stop_loss == 'N/A' else f'{stop_loss:.2f}'}\n\n"
+        response += f"**III. Take profit:** {take_profit if take_profit == 'N/A' else f'{take_profit:.2f}'}\n\n"
+        response += f"**IV. Confidence:** {confidence}%\n\n"
+        response += f"**V. Asset:** {asset}\n\n"
+        response += f"**VI. Time in force:** {time_in_force}\n\n"
+        response += f"**VII. Overview:** {overview}"
         return response
