@@ -46,9 +46,9 @@ with st.sidebar:
     ### Local Analysis Engine
     The agent is now powered by local institutional libraries including:
     - **Pandas-TA** (Technical Analysis)
-    - **QuantLib** (Risk Management)
     - **Scipy/Numpy** (SMC Logic)
-    - **YFinance** (Market Data)
+    - **YFinance/CCXT** (Market Data)
+    - **Alpaca-py** (Institutional Flow)
     """)
 
     st.divider()
@@ -67,10 +67,12 @@ with st.sidebar:
         rsi = st.checkbox("RSI", value=True)
         macd = st.checkbox("MACD")
         ema_sma = st.checkbox("EMA/SMA", value=True)
+        bb = st.checkbox("Bollinger Bands")
     with col_ind2:
         fib = st.checkbox("Fibonacci")
         sr = st.checkbox("S/R Levels", value=True)
         patterns = st.checkbox("Chart Patterns")
+        volume = st.checkbox("Volume Profile")
 
 # Main Content
 st.title("💹 Institutional AI Trade Predictor")
@@ -86,10 +88,18 @@ with col1:
 
     market_data = st.text_area(
         "Market Context (Optional)",
-        height=150,
+        height=100,
         placeholder="Enter any additional market context, news, or observations..."
     )
 
+    st.subheader("🖼️ Upload Chart Screenshot")
+    uploaded_file = st.file_uploader("Upload a chart screenshot for visual confirmation (Optional)", type=["png", "jpg", "jpeg"])
+
+    if uploaded_file is not None:
+        st.image(uploaded_file, caption="Uploaded Chart Screenshot", use_container_width=True)
+        st.success("Screenshot uploaded. Our SMC engine will cross-reference technical data with the visual structure.")
+
+    st.markdown("<br>", unsafe_allow_html=True)
     predict_button = st.button("🚀 PREDICT TRADE NOW", use_container_width=True)
 
 with col2:
@@ -107,14 +117,39 @@ with col2:
                         "market_type": market_type,
                         "timeframe": timeframe,
                         "risk_profile": risk_profile,
-                        "context": market_data
+                        "context": market_data,
+                        "indicators": {
+                            "rsi": rsi,
+                            "macd": macd,
+                            "ema_sma": ema_sma,
+                            "fib": fib,
+                            "sr": sr,
+                            "patterns": patterns,
+                            "bb": bb,
+                            "volume": volume
+                        }
                     }
 
                     agent = TradeAgent()
                     analysis = agent.analyze(params)
 
-                    # Display the result
-                    st.markdown(analysis)
+                    # Display the result in a more structured way
+                    lines = analysis.split("\n\n")
+                    for line in lines:
+                        if line.startswith("**I."):
+                            st.metric("Entry Price", line.split(":")[1].strip())
+                        elif line.startswith("**II."):
+                            st.metric("Stoploss", line.split(":")[1].strip())
+                        elif line.startswith("**III."):
+                            st.metric("Take Profit", line.split(":")[1].strip())
+                        elif line.startswith("**IV."):
+                            st.info(line)
+                        elif line.startswith("**V."):
+                            st.success(line)
+                        elif line.startswith("**VI."):
+                            st.warning(line)
+                        elif line.startswith("**VII."):
+                            st.markdown(line)
 
                 except Exception as e:
                     st.error(f"An error occurred: {e}")
