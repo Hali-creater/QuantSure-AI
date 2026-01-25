@@ -172,6 +172,14 @@ class TradeAgent:
         except Exception:
             pass
 
+        # Factor 5: Contextual Analysis
+        context = params.get('context', '').lower()
+        if context:
+            bullish_keywords = ['bullish', 'strong', 'growth', 'positive', 'buy', 'long', 'support']
+            bearish_keywords = ['bearish', 'weak', 'crash', 'negative', 'sell', 'short', 'resistance']
+            if any(k in context for k in bullish_keywords): factors.append(5)
+            if any(k in context for k in bearish_keywords): factors.append(-5)
+
         # Final Score
         total_score = sum(factors)
         confidence = min(max(50 + total_score, 0), 95)
@@ -217,7 +225,7 @@ class TradeAgent:
             stop_loss = "N/A"
             take_profit = "N/A"
 
-        # Generate 7-point response
+        # Generate structured response
         trade_nature = "Wait and Watch"
         if decision == "BUY":
             trade_nature = "Bullish Continuation" if smc['structure'] == "BOS (Bullish)" else "Potential Mean Reversion"
@@ -225,18 +233,21 @@ class TradeAgent:
             trade_nature = "Bearish Continuation" if smc['structure'] == "BOS (Bearish)" else "Potential Mean Reversion"
 
         overview = f"Market analysis for {asset} shows a {smc['bias']} bias with {smc['structure']} structure. This trade has the nature of a **{trade_nature}**. "
+        if params.get('context'):
+            overview += "The provided market context has been factored into the institutional bias. "
         if smc['fvgs']:
-            overview += f"Detected Fair Value Gaps at {', '.join([f'{f['level']:.2f}' for f in smc['fvgs']])}. "
-        overview += f"RSI is currently at {rsi:.2f}, indicating { 'oversold' if rsi < 30 else 'overbought' if rsi > 70 else 'neutral' } momentum."
+            overview += f"Detected Fair Value Gaps (FVG) near current price, indicating institutional interest zones. "
+        overview += f"RSI is currently at {rsi:.2f}, indicating { 'oversold' if rsi < 30 else 'overbought' if rsi > 70 else 'neutral' } momentum. "
+        overview += "Analysis incorporates Market Context, Structure, Liquidity, and Risk Management frameworks."
 
-        # Risk profile adjustment
-        time_in_force = "DAY" if timeframe in ["1m", "5m", "15m", "1h"] else "GTC"
+        time_in_force = "DAY" if timeframe in ["1m", "5m", "15m", "30m", "1h"] else "GTC"
 
-        response = f"**I. Entry Price:** {entry if entry == 'N/A' else f'{entry:.2f}'}\n\n"
-        response += f"**II. Stoploss:** {stop_loss if stop_loss == 'N/A' else f'{stop_loss:.2f}'}\n\n"
-        response += f"**III. Take profit:** {take_profit if take_profit == 'N/A' else f'{take_profit:.2f}'}\n\n"
-        response += f"**IV. Confidence:** {confidence}%\n\n"
-        response += f"**V. Asset:** {asset}\n\n"
-        response += f"**VI. Time in force:** {time_in_force}\n\n"
-        response += f"**VII. Overview:** {overview}"
-        return response
+        return {
+            "entry": entry if entry == "N/A" else f"{entry:.2f}",
+            "stop_loss": stop_loss if stop_loss == "N/A" else f"{stop_loss:.2f}",
+            "take_profit": take_profit if take_profit == "N/A" else f"{take_profit:.2f}",
+            "confidence": f"{confidence}%",
+            "asset": asset,
+            "time_in_force": time_in_force,
+            "overview": overview
+        }
