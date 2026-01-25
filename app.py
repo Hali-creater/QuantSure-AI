@@ -125,10 +125,8 @@ with st.sidebar:
     volume = st.checkbox("Volume Profile")
 
 # Main Content
-st.markdown('<div class="main-card">', unsafe_allow_html=True)
 st.title("💹 Institutional AI Trade Predictor")
 st.markdown("Experience institutional-grade Smart Money Concepts (SMC) and market analysis.")
-st.markdown('</div>', unsafe_allow_html=True)
 
 col1, col2 = st.columns([1, 1.2], gap="large")
 
@@ -189,7 +187,7 @@ with col2:
                         st.markdown(f'<div class="info-box bg-green-custom">Asset: {res["asset"]}</div>', unsafe_allow_html=True)
                         st.markdown(f'<div class="info-box bg-yellow-custom">Time in force: {res["time_in_force"]}</div>', unsafe_allow_html=True)
 
-                        st.markdown(f'<div class="mt-4"><h5 style="color: #8b949e; font-size: 0.9rem; text-transform: uppercase;">VII. Detailed Overview</h5>'
+                        st.markdown(f'<div class="mt-4"><h5 style="color: #8b949e; font-size: 0.9rem; text-transform: uppercase;">Detailed Overview</h5>'
                                     f'<p style="font-size: 0.95rem; line-height: 1.6;">{res["overview"]}</p></div>', unsafe_allow_html=True)
                         st.markdown('</div>', unsafe_allow_html=True)
 
