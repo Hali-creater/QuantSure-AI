@@ -22,8 +22,8 @@ class TradeAgent:
             if not s.endswith("=X"): return f"{s}=X"
 
         # Commodities
-        if s == "XAUUSD" or s == "GOLD": return "XAUUSD=X"
-        if s == "XAGUSD" or s == "SILVER": return "XAGUSD=X"
+        if s == "XAUUSD" or s == "GOLD": return "GC=F"
+        if s == "XAGUSD" or s == "SILVER": return "SI=F"
         if s == "WTI" or s == "CRUDEOIL": return "CL=F"
 
         return asset
@@ -42,19 +42,30 @@ class TradeAgent:
 
         try:
             df = yf.download(symbol, period=period, interval=interval, progress=False)
+
+            # If failed, try original asset (cleaned of slashes)
             if df is None or df.empty or len(df) < 5:
-                # If normalized failed, try original
-                if symbol != asset:
-                    df = yf.download(asset, period=period, interval=interval, progress=False)
+                alt_symbol = asset.replace("/", "-")
+                if alt_symbol != symbol:
+                    df = yf.download(alt_symbol, period=period, interval=interval, progress=False)
 
             if df is None or df.empty or len(df) < 5:
                 return None
 
-            # Flatten columns if multi-indexed
+            # Robust MultiIndex flattening
             if isinstance(df.columns, pd.MultiIndex):
                 df.columns = df.columns.get_level_values(0)
+
+            # Ensure columns are standard
+            df = df[['Open', 'High', 'Low', 'Close', 'Volume']].copy()
+
+            # Clean up any NaNs
+            df = df.dropna()
+
+            if len(df) < 5: return None
             return df
-        except Exception:
+        except Exception as e:
+            print(f"Data Fetch Error: {e}")
             return None
 
     def detect_smc(self, df):
@@ -187,6 +198,9 @@ class TradeAgent:
         df_htf = self.get_data(asset, htf)
         if df_htf is None:
             return "Neutral"
+
+        # Calculate indicators for HTF to ensure detect_smc and other logic have context
+        df_htf = self.calculate_indicators(df_htf)
 
         smc_htf = self.detect_smc(df_htf)
         return smc_htf['bias']
